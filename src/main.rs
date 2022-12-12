@@ -1,7 +1,7 @@
 mod kubeproxy;
 mod updater;
 
-use std::sync::Arc;
+use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH, Duration}};
 
 use eframe::{egui, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
@@ -85,9 +85,13 @@ impl eframe::App for KubeMonGUI {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("kube-mongui");
 
+            ui.separator();
+
             self.namespace_selector(ui);
 
-            ui.label(format!("Listening on {}", self.proxy.listen_addr));
+
+            // Update at least once per second
+            ctx.request_repaint_after(Duration::from_secs(1));
         });
    }
 }
