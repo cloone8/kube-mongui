@@ -24,11 +24,28 @@ fn namespace_selector(config: &mut KubeMonGUI, ui: &mut egui::Ui) {
     *selected_namespace = local_selected_namespace;
 }
 
+#[inline]
+fn render_container(container: &crate::data::container::ContainerInfo, ui: &mut egui::Ui) {
+    ui.collapsing(container.name.as_str(), |ui| {
+        ui.label(container.name.as_str());
+        ui.label(container.image.as_str());
+    });
+}
+
+#[inline]
+fn render_pod(pod: &crate::data::pod::PodInfo, ui: &mut egui::Ui) {
+    ui.collapsing(pod.name.as_str(), |ui| {
+        for container in pod.containers.iter() {
+            render_container(container, ui);
+        }
+    });
+}
+
 fn pods(config: &mut KubeMonGUI, ui: &mut egui::Ui) {
     let pods = config.pods.lock();
 
     for pod in pods.iter() {
-        ui.label(pod);
+        render_pod(pod, ui);
     }
 }
 

@@ -12,7 +12,7 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
         loop {
             let json_response = request_util::get_json_from_url(url.as_str());
 
-            if let Some(response) = json_response { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
+            if let Ok(response) = json_response { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
 
                 let mut namespaces = namespaces.lock();
 

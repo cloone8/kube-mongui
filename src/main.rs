@@ -3,11 +3,13 @@ mod updaters;
 mod tabs;
 mod util;
 mod cli_args;
+mod data;
 
 use std::{sync::Arc, time::Duration, fmt::Display};
 
 use clap::Parser;
 use cli_args::CLIArgs;
+use data::pod::PodInfo;
 use eframe::{egui, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
 
@@ -79,7 +81,7 @@ pub(crate) struct KubeMonGUI {
     namespaces: Arc<Mutex<Vec<String>>>,
     selected_namespace: Arc<Mutex<Option<String>>>,
 
-    pods: Arc<Mutex<Vec<String>>>,
+    pods: Arc<Mutex<Vec<PodInfo>>>,
 }
 
 impl KubeMonGUI {
@@ -93,7 +95,7 @@ impl KubeMonGUI {
             selected_tab: KubeMonTabs::default(),
             namespaces: Arc::new(Mutex::new(Vec::new())),
             selected_namespace: Arc::new(Mutex::new(None)),
-            pods: Arc::new(Mutex::new(vec!["Testpod 1".to_owned(), "A testpod 2".to_owned(), "Another testpod 3".to_owned()])),
+            pods: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }
