@@ -1,6 +1,7 @@
 mod kubeproxy;
-mod updater;
+mod updaters;
 mod tabs;
+mod util;
 
 use std::{sync::Arc, time::Duration, fmt::Display};
 
@@ -23,7 +24,7 @@ fn main() {
 
     let mut ui = Box::new(KubeMonGUI::new(kubeproxy));
 
-    match updater::start_all(&mut ui) {
+    match updaters::start_all(&mut ui) {
         Ok(_) => (),
         Err(e) => panic!("Failed to start updater: {:?}", e),
     };
@@ -65,6 +66,8 @@ pub(crate) struct KubeMonGUI {
 
     namespaces: Arc<Mutex<Vec<String>>>,
     selected_namespace: Arc<Mutex<Option<String>>>,
+
+    pods: Arc<Mutex<Vec<String>>>,
 }
 
 impl KubeMonGUI {
@@ -78,6 +81,7 @@ impl KubeMonGUI {
             selected_tab: KubeMonTabs::default(),
             namespaces: Arc::new(Mutex::new(Vec::new())),
             selected_namespace: Arc::new(Mutex::new(None)),
+            pods: Arc::new(Mutex::new(vec!["Testpod 1".to_owned(), "A testpod 2".to_owned(), "Another testpod 3".to_owned()])),
         }
     }
 }

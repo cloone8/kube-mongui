@@ -24,6 +24,18 @@ fn namespace_selector(config: &mut KubeMonGUI, ui: &mut egui::Ui) {
     *selected_namespace = local_selected_namespace;
 }
 
+fn pods(config: &mut KubeMonGUI, ui: &mut egui::Ui) {
+    let pods = config.pods.lock();
+
+    for pod in pods.iter() {
+        ui.label(pod);
+    }
+}
+
 pub(crate) fn show(config: &mut KubeMonGUI, _: &egui::Context, ui: &mut egui::Ui) {
     namespace_selector(config, ui);
+
+    ui.separator();
+
+    pods(config, ui);
 }

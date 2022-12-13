@@ -1,7 +1,6 @@
-use crate::KubeMonGUI;
+use crate::{KubeMonGUI, util::request_util};
 
 use std::{thread::{self, sleep}, time::Duration};
-
 
 pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
     let namespaces = ui_info.namespaces.clone();
@@ -11,11 +10,9 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
 
     thread::spawn(move || {
         loop {
-            let response = reqwest::blocking::get(url.clone())
-                .expect("Failed to get namespaces")
-                .json::<serde_json::Value>().expect("Failed to parse namespaces");
+            let json_response = request_util::get_json_from_url(url.as_str());
 
-            { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
+            if let Some(response) = json_response { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
 
                 let mut namespaces = namespaces.lock();
 
