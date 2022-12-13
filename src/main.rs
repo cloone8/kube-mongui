@@ -1,7 +1,8 @@
 mod kubeproxy;
 mod updater;
+mod tabs;
 
-use std::{sync::Arc, time::{SystemTime, UNIX_EPOCH, Duration}};
+use std::{sync::Arc, time::Duration, fmt::Display};
 
 use eframe::{egui, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
@@ -34,8 +35,33 @@ fn main() {
     );
 }
 
+#[derive(PartialEq, Eq, Clone)]
+enum KubeMonTabs {
+    RunningPods,
+    CronJobs,
+    Resources
+}
+
+impl Default for KubeMonTabs {
+    fn default() -> Self {
+        KubeMonTabs::RunningPods
+    }
+}
+
+impl Display for KubeMonTabs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            KubeMonTabs::RunningPods => write!(f, "Pods"),
+            KubeMonTabs::CronJobs => write!(f, "CronJobs"),
+            KubeMonTabs::Resources => write!(f, "Resource usage"),
+        }
+    }
+}
+
 pub(crate) struct KubeMonGUI {
     proxy: KubeProxy,
+
+    selected_tab: KubeMonTabs,
 
     namespaces: Arc<Mutex<Vec<String>>>,
     selected_namespace: Arc<Mutex<Option<String>>>,
@@ -49,46 +75,38 @@ impl KubeMonGUI {
         // for e.g. egui::PaintCallback.
         KubeMonGUI {
             proxy: proxy,
+            selected_tab: KubeMonTabs::default(),
             namespaces: Arc::new(Mutex::new(Vec::new())),
             selected_namespace: Arc::new(Mutex::new(None)),
         }
     }
 }
 
-impl KubeMonGUI {
-    fn namespace_selector(&mut self, ui: &mut egui::Ui) {
-        let mut selected_namespace = self.selected_namespace.lock();
-
-        let mut local_selected_namespace = selected_namespace.clone();
-
-        egui::ComboBox::from_label("Selected namespace")
-            .selected_text(match local_selected_namespace {
-                Some(ref ns) => ns,
-                None => "Select a namespace...",
-            })
-            .show_ui(ui, |ui| {
-                let data = self.namespaces.lock();
-
-                for item in data.iter() {
-                    ui.selectable_value(&mut local_selected_namespace, Some(item.to_owned()), item);
-                }
-            }
-        );
-
-        *selected_namespace = local_selected_namespace;
-    }
+fn tab_selector(config: &mut KubeMonGUI, ui: &mut egui::Ui) {
+    egui::ComboBox::from_label("Tab")
+        .selected_text(config.selected_tab.to_string())
+        .show_ui(ui, |ui| {
+            ui.selectable_value(&mut config.selected_tab, KubeMonTabs::RunningPods, KubeMonTabs::RunningPods.to_string());
+            ui.selectable_value(&mut config.selected_tab, KubeMonTabs::CronJobs, KubeMonTabs::CronJobs.to_string());
+            ui.selectable_value(&mut config.selected_tab, KubeMonTabs::Resources, KubeMonTabs::Resources.to_string());
+        }
+    );
 }
-
 
 impl eframe::App for KubeMonGUI {
    fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("kube-mongui");
 
+            tab_selector(self, ui);
+
             ui.separator();
 
-            self.namespace_selector(ui);
-
+            match self.selected_tab {
+                KubeMonTabs::RunningPods => tabs::pods::show(self, ctx, ui),
+                KubeMonTabs::CronJobs => (),
+                KubeMonTabs::Resources => (),
+            }
 
             // Update at least once per second
             ctx.request_repaint_after(Duration::from_secs(1));
