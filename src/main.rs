@@ -2,22 +2,19 @@ mod kubeproxy;
 mod updaters;
 mod tabs;
 mod util;
+mod cli_args;
 
 use std::{sync::Arc, time::Duration, fmt::Display};
 
+use clap::Parser;
+use cli_args::CLIArgs;
 use eframe::{egui, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
 
-fn get_native_options() -> eframe::NativeOptions {
-    let mut native_options = eframe::NativeOptions::default();
-
-    native_options.follow_system_theme = true;
-
-    native_options
-}
-
 fn main() {
-    let kubeproxy = match kubeproxy::start_kubectl_proxy(8001) {
+    let args = CLIArgs::parse();
+
+    let kubeproxy = match kubeproxy::start_kubectl_proxy(args.port) {
         Ok(child) => child,
         Err(e) => panic!("Failed to start kubectl proxy: {:?}", e),
     };
@@ -31,9 +28,24 @@ fn main() {
 
     eframe::run_native(
         "kube-mongui",
-        get_native_options(),
+        get_native_options(&args),
         Box::new(|_| ui)
     );
+}
+
+fn get_native_options(args: &CLIArgs) -> eframe::NativeOptions {
+    let mut native_options = eframe::NativeOptions::default();
+
+    match &args.theme {
+        Some(prefered_theme) => {
+            native_options.follow_system_theme = false;
+
+            native_options.default_theme = eframe::Theme::from(prefered_theme);
+        },
+        None => native_options.follow_system_theme = true,
+    };
+
+    native_options
 }
 
 #[derive(PartialEq, Eq, Clone)]
