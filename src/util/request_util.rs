@@ -1,23 +1,18 @@
-pub fn get_json_from_url(url: &str) -> Result<serde_json::Value, reqwest::Error> {
-     match reqwest::blocking::get(url) {
-        Ok(resp) => match resp.error_for_status() {
-            Ok(resp_ok) => {
-                match resp_ok.json::<serde_json::Value>() {
-                    Ok(json) => Ok(json),
-                    Err(decode_err) => {
-                        println!("Failed to parse response: {:?} {:?}", decode_err, url);
-                        Err(decode_err)
-                    }
-                }
-            },
-            Err(request_err) => {
-                println!("Kubectl returned error: {:?}", request_err);
-                Err(request_err)
-            },
-        },
-        Err(connection_err) => {
-            println!("Error while making connection: {:?}", connection_err);
-            Err(connection_err)
-        }
+pub enum RequestError {
+    Request(reqwest::Error),
+    Parse(k8s_openapi::ResponseError),
+}
+
+pub fn get_response_from_url<T>(url: &str) -> Result<T, RequestError>
+    where T: k8s_openapi::Response
+{
+    let response = match reqwest::blocking::get(url) {
+        Ok(it) => it,
+        Err(err) => return Err(RequestError::Request(err)),
+    };
+
+    match T::try_from_parts(response.status(), response.bytes().unwrap().as_ref()) {
+        Ok((parsed, _)) => Ok(parsed),
+        Err(parse_err) => Err(RequestError::Parse(parse_err)),
     }
 }

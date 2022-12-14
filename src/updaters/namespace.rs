@@ -1,3 +1,5 @@
+use k8s_openapi::{ListResponse, api::core::v1::Namespace};
+
 use crate::{KubeMonGUI, util::request_util};
 
 use std::{thread::{self, sleep}, time::Duration};
@@ -10,18 +12,17 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
 
     thread::spawn(move || {
         loop {
-            let json_response = request_util::get_json_from_url(url.as_str());
+            let response = request_util::get_response_from_url::<ListResponse<Namespace>>(url.as_str());
 
-            if let Ok(response) = json_response { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
-
+            if let Ok(ListResponse::Ok(response)) = response { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
                 let mut namespaces = namespaces.lock();
 
                 namespaces.clear();
 
-                for retrieved_namespace in response["items"].as_array().unwrap() {
-                    let name = retrieved_namespace["metadata"]["name"].as_str().unwrap().to_string();
+                for retrieved_namespace in response.items.iter() {
+                    let name = retrieved_namespace.metadata.name.as_ref().unwrap();
 
-                    namespaces.push(name);
+                    namespaces.push(name.clone());
                 }
 
                 let mut selected_namespace = selected_namespace.lock();
