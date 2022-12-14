@@ -16,6 +16,11 @@ use kubeproxy::KubeProxy;
 fn main() {
     let args = CLIArgs::parse();
 
+    simple_logger::init_with_level(log::Level::from(args.verbosity.clone())).unwrap();
+
+    log::debug!("Starting kube-mongui (debug)");
+    log::info!("Starting kube-mongui (info)");
+
     let kubeproxy = match kubeproxy::start_kubectl_proxy(args.port) {
         Ok(child) => child,
         Err(e) => panic!("Failed to start kubectl proxy: {:?}", e),
