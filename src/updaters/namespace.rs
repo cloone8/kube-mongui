@@ -26,13 +26,10 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
 
                 let mut selected_namespace = selected_namespace.lock();
 
-                match selected_namespace.as_ref() {
-                    Some(ns) => {
-                        if !namespaces.contains(ns) {
-                            *selected_namespace = None;
-                        }
-                    },
-                    None => (),
+                if let Some(ns) = selected_namespace.as_ref() {
+                    if !namespaces.contains(ns) {
+                        *selected_namespace = None;
+                    }
                 };
             }
 

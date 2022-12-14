@@ -1,11 +1,11 @@
 pub fn get_json_from_url(url: &str) -> Result<serde_json::Value, reqwest::Error> {
-     match reqwest::blocking::get(url.clone()) {
+     match reqwest::blocking::get(url) {
         Ok(resp) => match resp.error_for_status() {
             Ok(resp_ok) => {
                 match resp_ok.json::<serde_json::Value>() {
                     Ok(json) => Ok(json),
                     Err(decode_err) => {
-                        println!("Failed to parse response: {:?} {:?}", decode_err, url.clone());
+                        println!("Failed to parse response: {:?} {:?}", decode_err, url);
                         Err(decode_err)
                     }
                 }

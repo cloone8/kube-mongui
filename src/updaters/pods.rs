@@ -13,15 +13,14 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
             let url = {
                 let locked_namespace = selected_namespace.lock();
 
-                match locked_namespace.as_ref() {
-                    Some(ns) => Some(format!(
+                locked_namespace.as_ref().map(|ns| {
+                    format!(
                         "http://{}:{}/api/v1/namespaces/{}/pods",
                         ip,
                         port,
                         ns
-                    )),
-                    None => None,
-                }
+                    )
+                })
             };
 
             if let Some(url) = url {
