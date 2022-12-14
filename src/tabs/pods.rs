@@ -29,15 +29,71 @@ fn render_container(container: &crate::data::container::ContainerInfo, ui: &mut 
     ui.collapsing(container.name.as_str(), |ui| {
         ui.label(container.name.as_str());
         ui.label(container.image.as_str());
+
+        match container.status {
+            crate::data::container::ContainerStatus::Running => ui.label("Running"),
+            crate::data::container::ContainerStatus::Waiting => ui.label("Waiting"),
+            crate::data::container::ContainerStatus::Terminated => ui.label("Terminated"),
+        };
+
+        let mut fake_bool = container.ready; // This was the user won't be able to change the value
+        ui.checkbox(&mut fake_bool, "Ready");
+
+        match container.resources.as_ref() {
+            Some(res) => {
+                ui.collapsing("Resources", |ui| {
+                    if let Some(req) = res.requests.as_ref() {
+                        ui.collapsing("Requests", |ui| {
+                            if let Some(cpu) = req.cpu.as_ref() {
+                                ui.label(format!("CPU: {}", cpu));
+                            };
+
+                            if let Some(mem) = req.memory.as_ref() {
+                                ui.label(format!("Memory: {}", mem));
+                            };
+                        });
+                    }
+
+                    if let Some(lim) = res.limits.as_ref() {
+                        ui.collapsing("Limits", |ui| {
+                            if let Some(cpu) = lim.cpu.as_ref() {
+                                ui.label(format!("CPU: {}", cpu));
+                            };
+
+                            if let Some(mem) = lim.memory.as_ref() {
+                                ui.label(format!("Memory: {}", mem));
+                            };
+                        });
+                    }
+                });
+            },
+            None => (),
+        };
     });
 }
 
 #[inline]
 fn render_pod(pod: &crate::data::pod::PodInfo, ui: &mut egui::Ui) {
     ui.collapsing(pod.name.as_str(), |ui| {
-        for container in pod.containers.iter() {
-            render_container(container, ui);
-        }
+        match pod.status {
+            crate::data::pod::PodStatus::Running => ui.label("Running"),
+            crate::data::pod::PodStatus::Pending => ui.label("Pending"),
+            crate::data::pod::PodStatus::Succeeded => ui.label("Succeeded"),
+            crate::data::pod::PodStatus::Failed => ui.label("Failed"),
+            crate::data::pod::PodStatus::Unknown => ui.label("Unknown"),
+        };
+
+        match pod.qos_class {
+            crate::data::pod::QoSClass::Guaranteed => ui.label("Guaranteed"),
+            crate::data::pod::QoSClass::Burstable => ui.label("Burstable"),
+            crate::data::pod::QoSClass::BestEffort => ui.label("BestEffort"),
+        };
+
+        ui.collapsing("Containers", |ui| {
+            for container in pod.containers.iter() {
+                render_container(container, ui);
+            }
+        });
     });
 }
 
