@@ -39,35 +39,32 @@ fn render_container(container: &crate::data::container::ContainerInfo, ui: &mut 
         let mut fake_bool = container.ready; // This was the user won't be able to change the value
         ui.checkbox(&mut fake_bool, "Ready");
 
-        match container.resources.as_ref() {
-            Some(res) => {
-                ui.collapsing("Resources", |ui| {
-                    if let Some(req) = res.requests.as_ref() {
-                        ui.collapsing("Requests", |ui| {
-                            if let Some(cpu) = req.cpu.as_ref() {
-                                ui.label(format!("CPU: {}", cpu));
-                            };
+        if let Some(res) = container.resources.as_ref() {
+            ui.collapsing("Resources", |ui| {
+                if let Some(req) = res.requests.as_ref() {
+                    ui.collapsing("Requests", |ui| {
+                        if let Some(cpu) = req.cpu.as_ref() {
+                            ui.label(format!("CPU: {}", cpu));
+                        };
 
-                            if let Some(mem) = req.memory.as_ref() {
-                                ui.label(format!("Memory: {}", mem));
-                            };
-                        });
-                    }
+                        if let Some(mem) = req.memory.as_ref() {
+                            ui.label(format!("Memory: {}", mem));
+                        };
+                    });
+                }
 
-                    if let Some(lim) = res.limits.as_ref() {
-                        ui.collapsing("Limits", |ui| {
-                            if let Some(cpu) = lim.cpu.as_ref() {
-                                ui.label(format!("CPU: {}", cpu));
-                            };
+                if let Some(lim) = res.limits.as_ref() {
+                    ui.collapsing("Limits", |ui| {
+                        if let Some(cpu) = lim.cpu.as_ref() {
+                            ui.label(format!("CPU: {}", cpu));
+                        };
 
-                            if let Some(mem) = lim.memory.as_ref() {
-                                ui.label(format!("Memory: {}", mem));
-                            };
-                        });
-                    }
-                });
-            },
-            None => (),
+                        if let Some(mem) = lim.memory.as_ref() {
+                            ui.label(format!("Memory: {}", mem));
+                        };
+                    });
+                }
+            });
         };
     });
 }
