@@ -9,7 +9,7 @@ use std::{sync::Arc, time::Duration, fmt::Display};
 
 use clap::Parser;
 use cli_args::CLIArgs;
-use data::pod::PodInfo;
+use data::{pod::PodInfo, node::NodeInfo};
 use eframe::{egui, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
 
@@ -59,7 +59,8 @@ fn get_native_options(args: &CLIArgs) -> eframe::NativeOptions {
 enum KubeMonTabs {
     RunningPods,
     CronJobs,
-    Resources
+    Resources,
+    Nodes
 }
 
 impl Default for KubeMonTabs {
@@ -74,6 +75,7 @@ impl Display for KubeMonTabs {
             KubeMonTabs::RunningPods => write!(f, "Pods"),
             KubeMonTabs::CronJobs => write!(f, "CronJobs"),
             KubeMonTabs::Resources => write!(f, "Resource usage"),
+            KubeMonTabs::Nodes => write!(f, "Nodes"),
         }
     }
 }
@@ -87,20 +89,19 @@ pub(crate) struct KubeMonGUI {
     selected_namespace: Arc<Mutex<Option<String>>>,
 
     pods: Arc<Mutex<Vec<PodInfo>>>,
+
+    nodes: Arc<Mutex<Vec<NodeInfo>>>
 }
 
 impl KubeMonGUI {
     fn new(proxy: KubeProxy) -> Self {
-        // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
-        // Restore app state using cc.storage (requires the "persistence" feature).
-        // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
-        // for e.g. egui::PaintCallback.
         KubeMonGUI {
             proxy,
             selected_tab: KubeMonTabs::default(),
             namespaces: Arc::new(Mutex::new(Vec::new())),
             selected_namespace: Arc::new(Mutex::new(None)),
             pods: Arc::new(Mutex::new(Vec::new())),
+            nodes: Arc::new(Mutex::new(Vec::new()))
         }
     }
 }
@@ -112,6 +113,7 @@ fn tab_selector(config: &mut KubeMonGUI, ui: &mut egui::Ui) {
             ui.selectable_value(&mut config.selected_tab, KubeMonTabs::RunningPods, KubeMonTabs::RunningPods.to_string());
             ui.selectable_value(&mut config.selected_tab, KubeMonTabs::CronJobs, KubeMonTabs::CronJobs.to_string());
             ui.selectable_value(&mut config.selected_tab, KubeMonTabs::Resources, KubeMonTabs::Resources.to_string());
+            ui.selectable_value(&mut config.selected_tab, KubeMonTabs::Nodes, KubeMonTabs::Nodes.to_string());
         }
     );
 }
@@ -129,6 +131,7 @@ impl eframe::App for KubeMonGUI {
                 KubeMonTabs::RunningPods => tabs::pods::show(self, ctx, ui),
                 KubeMonTabs::CronJobs => (),
                 KubeMonTabs::Resources => (),
+                KubeMonTabs::Nodes => tabs::nodes::show(self, ctx, ui),
             }
 
             // Update at least once per second
