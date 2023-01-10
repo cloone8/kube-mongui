@@ -8,7 +8,7 @@ pub(crate) fn show(config: &mut KubeMonGUI, _: &egui::Context, ui: &mut egui::Ui
     for node in nodes.iter() {
         ui.collapsing(node.name.as_str(), |ui| {
 
-            ui.label(node.arch.as_str());
+            ui.label(node.hardware.arch.as_str());
             ui.collapsing("OS Info", |ui| {
                 ui.label(node.os.name.as_str());
 

@@ -10,7 +10,7 @@ use std::{sync::Arc, time::Duration, fmt::Display};
 use clap::Parser;
 use cli_args::CLIArgs;
 use data::{pod::PodInfo, node::NodeInfo};
-use eframe::{egui, epaint::mutex::Mutex};
+use eframe::{egui::{self, ScrollArea}, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
 
 fn main() {
@@ -127,12 +127,14 @@ impl eframe::App for KubeMonGUI {
 
             ui.separator();
 
-            match self.selected_tab {
-                KubeMonTabs::RunningPods => tabs::pods::show(self, ctx, ui),
-                KubeMonTabs::CronJobs => (),
-                KubeMonTabs::Resources => (),
-                KubeMonTabs::Nodes => tabs::nodes::show(self, ctx, ui),
-            }
+            ScrollArea::vertical().show(ui, |ui| {
+                match self.selected_tab {
+                    KubeMonTabs::RunningPods => tabs::pods::show(self, ctx, ui),
+                    KubeMonTabs::CronJobs => (),
+                    KubeMonTabs::Resources => (),
+                    KubeMonTabs::Nodes => tabs::nodes::show(self, ctx, ui),
+                }
+            });
 
             // Update at least once per second
             ctx.request_repaint_after(Duration::from_secs(1));

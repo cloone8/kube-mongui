@@ -1,7 +1,9 @@
+use chrono::{DateTime, Utc};
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct NodeInfo {
     pub name: String,
-    pub arch: String,
+    pub hardware: HardwareDetail,
     pub os: OsDetail,
     pub conditions: Vec<NodeCondition>,
     pub addresses: Vec<Address>,
@@ -15,13 +17,29 @@ pub(crate) struct OsDetail {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct HardwareDetail {
+    pub arch: String,
+    pub capacity: Option<Hardware>,
+    pub allocatable: Option<Hardware>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Hardware {
+    pub cpu: Option<String>,
+    pub memory: Option<String>,
+    pub pods: Option<String>,
+    pub ephemeral_storage: Option<String>,
+    pub hugepages_2_mi: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct NodeCondition {
     pub condition_type: String,
-    pub status: bool,
-    pub last_heartbeat_time: String,
-    pub last_transition_time: String,
-    pub reason: String,
-    pub message: String,
+    pub status: Option<bool>,
+    pub last_heartbeat_time: Option<DateTime<Utc>>,
+    pub last_transition_time: Option<DateTime<Utc>>,
+    pub reason: Option<String>,
+    pub message: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

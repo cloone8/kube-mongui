@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use clap::{Parser, ValueEnum};
 
 #[derive(Parser, Debug)]
