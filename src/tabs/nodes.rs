@@ -56,10 +56,9 @@ pub(crate) fn show(config: &mut KubeMonGUI, _: &egui::Context, ui: &mut egui::Ui
     for node in nodes.iter() {
         ui.collapsing(node.name.as_str(), |ui| {
 
-            ui.label(node.hardware.arch.as_str());
             ui.collapsing("OS Info", |ui| {
                 ui.label(node.os.name.as_str());
-
+                ui.label(node.hardware.arch.as_str());
                 node.os.image.as_ref().map(|image| ui.label(image));
                 node.os.kernel_version.as_ref().map(|kver| ui.label(kver));
             });
@@ -101,6 +100,52 @@ pub(crate) fn show(config: &mut KubeMonGUI, _: &egui::Context, ui: &mut egui::Ui
                             .text(format!("Memory: {}/{}", fmt_mem(usage.memory.unwrap()), fmt_mem(allocatable.memory.unwrap())));
 
                         ui.add(progress_mem);
+                    }
+                });
+            }
+
+            if !node.addresses.is_empty() {
+                ui.collapsing("Addresses", |ui| {
+                    for address in node.addresses.iter() {
+                        ui.label(format!("{}: {}", address.address_type, address.address));
+                    }
+                });
+            }
+
+            if !node.conditions.is_empty() {
+                ui.collapsing("Conditions", |ui| {
+                    for condition in node.conditions.iter() {
+                        let condition_label = format!("{}: {}", condition.condition_type, if condition.status.is_some() { condition.status.unwrap() } else { false });
+
+                        ui.collapsing(condition_label, |ui| {
+                            condition
+                            .last_transition_time
+                            .as_ref()
+                            .map(|last_transition_time|
+                                ui.label(format!("Last transition time: {}", DateTime::<Local>::from(*last_transition_time)))
+                            );
+
+                        condition
+                            .last_heartbeat_time
+                            .as_ref()
+                            .map(|last_heartbeat_time|
+                                ui.label(format!("Last heartbeat time: {}", DateTime::<Local>::from(*last_heartbeat_time)))
+                            );
+
+                        condition
+                            .reason
+                            .as_ref()
+                            .map(|reason|
+                                ui.label(format!("Reason: {}", reason))
+                            );
+
+                        condition
+                            .message
+                            .as_ref()
+                            .map(|message|
+                                ui.label(format!("Message: {}", message))
+                            );
+                        });
                     }
                 });
             }
