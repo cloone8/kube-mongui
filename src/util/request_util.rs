@@ -34,6 +34,7 @@ fn get_response_from_url_unlogged<T>(url: &str) -> Result<T, RequestError>
     }
 }
 
+#[allow(dead_code)]
 pub fn attempt_as_json<T>(url: &str) -> Result<Vec<T>, RequestError>
     where T: serde::de::DeserializeOwned
 {

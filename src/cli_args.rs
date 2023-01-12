@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use clap::{Parser, ValueEnum};
 
 #[derive(Parser, Debug)]
@@ -14,7 +12,12 @@ pub(crate) struct CLIArgs {
     pub theme: Option<Theme>,
 
     #[arg(value_enum, short, long, default_value_t = LogLevel::Warn)]
-    pub verbosity: LogLevel
+    pub verbosity: LogLevel,
+
+    /// Url to the kubernetes API. Must be pre-authenticated. If left empty, kube-mongui will
+    /// attempt to start a kubectl proxy by itself
+    #[arg(short = 'u', long)]
+    pub kubeproxy_url: Option<String>
 }
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -61,6 +64,20 @@ impl From<LogLevel> for log::Level {
             LogLevel::Error => log::Level::Error,
             LogLevel::Warn => log::Level::Warn,
             LogLevel::Info => log::Level::Info,
+        }
+    }
+}
+
+impl ToString for LogLevel {
+    fn to_string(&self) -> String {
+        match self {
+            LogLevel::Error => "error".to_string(),
+            LogLevel::Warn => "warn".to_string(),
+            LogLevel::Info => "info".to_string(),
+            #[cfg(debug_assertions)]
+            LogLevel::Debug => "debug".to_string(),
+            #[cfg(debug_assertions)]
+            LogLevel::Trace => "trace".to_string(),
         }
     }
 }

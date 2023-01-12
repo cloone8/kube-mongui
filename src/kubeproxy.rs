@@ -1,5 +1,11 @@
-use std::{process::{Command, Child, Stdio}, io::{self, BufReader, BufRead}, net::{Ipv4Addr, SocketAddr, SocketAddrV4}, str::FromStr};
 use scanf::sscanf;
+use std::{
+    io::{self, BufRead, BufReader},
+    net::{Ipv4Addr},
+    process::{Child, Command, Stdio},
+    str::FromStr,
+};
+
 
 #[derive(Debug)]
 pub enum KubeProxyErr {
@@ -11,12 +17,14 @@ pub enum KubeProxyErr {
 #[derive(Debug)]
 pub struct KubeProxy {
     process: Child,
-    pub listen_addr: SocketAddr
+    pub url: String,
 }
 
 impl Drop for KubeProxy {
     fn drop(&mut self) {
+        log::info!("Killing kubectl proxy process...");
         self.process.kill().unwrap();
+        log::info!("Killed kubectl proxy process.");
     }
 }
 
@@ -48,7 +56,12 @@ pub fn start_kubectl_proxy(port: u16) -> Result<KubeProxy, KubeProxyErr> {
                 let mut addr_str = String::new();
                 let mut port: u16 = 0;
 
-                match sscanf!(output_buf.as_str(), "Starting to serve on {string}:{u16}", addr_str, port) {
+                match sscanf!(
+                    output_buf.as_str(),
+                    "Starting to serve on {string}:{u16}",
+                    addr_str,
+                    port
+                ) {
                     Ok(addr) => addr,
                     Err(_) => continue,
                 };
@@ -59,20 +72,13 @@ pub fn start_kubectl_proxy(port: u16) -> Result<KubeProxy, KubeProxyErr> {
                 };
 
                 break (addr, port);
-            },
+            }
             Err(e) => return Err(KubeProxyErr::ChildRead(Some(e))),
         }
     };
 
-    Ok(
-        KubeProxy {
-            process,
-            listen_addr: SocketAddr::V4(
-                SocketAddrV4::new(
-                    listen_addr,
-                    listen_port
-                )
-            )
-        }
-    )
+    Ok(KubeProxy {
+        process,
+        url: format!("http://{}:{}", listen_addr, listen_port),
+    })
 }

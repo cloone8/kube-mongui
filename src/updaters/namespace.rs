@@ -7,8 +7,9 @@ use std::{thread::{self, sleep}, time::Duration};
 pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
     let namespaces = ui_info.namespaces.clone();
     let selected_namespace = ui_info.selected_namespace.clone();
+    let kube_url = ui_info.k8s_api.get_url();
 
-    let url = format!("http://{}:{}/api/v1/namespaces", ui_info.proxy.listen_addr.ip(), ui_info.proxy.listen_addr.port());
+    let url = format!("{}/api/v1/namespaces", kube_url);
 
     thread::spawn(move || {
         loop {

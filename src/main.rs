@@ -18,15 +18,24 @@ fn main() {
 
     simple_logger::init_with_level(log::Level::from(args.verbosity.clone())).unwrap();
 
-    log::debug!("Starting kube-mongui (debug)");
-    log::info!("Starting kube-mongui (info)");
+    println!("Starting kube-mongui");
+    println!("Log level: {}", args.verbosity.to_string());
 
-    let kubeproxy = match kubeproxy::start_kubectl_proxy(args.port) {
-        Ok(child) => child,
-        Err(e) => panic!("Failed to start kubectl proxy: {:?}", e),
+    let k8s_api_url = match args.kubeproxy_url {
+        Some(ref url) => {
+            log::info!("Using kubectl proxy url: {}", url);
+            KubeUrl::Url(url.clone())
+        },
+        None => match kubeproxy::start_kubectl_proxy(args.port) {
+            Ok(child) => {
+                log::info!("Starting own kubectl proxy (with specified port: {})", if args.port != 0 { args.port.to_string() } else { "no".to_string() });
+                KubeUrl::Proxy(child)
+            },
+            Err(e) => panic!("Failed to start kubectl proxy: {:?}", e),
+        }
     };
 
-    let mut ui = Box::new(KubeMonGUI::new(kubeproxy));
+    let mut ui = Box::new(KubeMonGUI::new(k8s_api_url));
 
     match updaters::start_all(&mut ui) {
         Ok(_) => (),
@@ -80,8 +89,22 @@ impl Display for KubeMonTabs {
     }
 }
 
+pub(crate) enum KubeUrl {
+    Proxy(KubeProxy),
+    Url(String)
+}
+
+impl KubeUrl {
+    pub fn get_url(&self) -> &str {
+        match self {
+            KubeUrl::Proxy(proxy) => proxy.url.as_str(),
+            KubeUrl::Url(url) => url.as_str()
+        }
+    }
+}
+
 pub(crate) struct KubeMonGUI {
-    proxy: KubeProxy,
+    k8s_api: KubeUrl,
 
     selected_tab: KubeMonTabs,
 
@@ -94,9 +117,9 @@ pub(crate) struct KubeMonGUI {
 }
 
 impl KubeMonGUI {
-    fn new(proxy: KubeProxy) -> Self {
+    fn new(k8s_api: KubeUrl) -> Self {
         KubeMonGUI {
-            proxy,
+            k8s_api,
             selected_tab: KubeMonTabs::default(),
             namespaces: Arc::new(Mutex::new(Vec::new())),
             selected_namespace: Arc::new(Mutex::new(None)),

@@ -63,11 +63,11 @@ fn get_node_info(node: &Node, _: Option<&NodeMetrics>) -> NodeInfo {
         capacity: node_status
             .capacity
             .as_ref()
-            .map(|x| get_hardware_detail_instance(x)),
+            .map(get_hardware_detail_instance),
         allocatable: node_status
             .allocatable
             .as_ref()
-            .map(|x| get_hardware_detail_instance(x)),
+            .map(get_hardware_detail_instance),
     };
 
     NodeInfo {
@@ -77,19 +77,19 @@ fn get_node_info(node: &Node, _: Option<&NodeMetrics>) -> NodeInfo {
         conditions: node_status
             .conditions
             .as_ref()
-            .map_or(Vec::new(), |x| x.iter().map(|x| get_condition(x)).collect()),
+            .map_or(Vec::new(), |x| x.iter().map(get_condition).collect()),
         addresses: node_status
             .addresses
             .as_ref()
-            .map_or(Vec::new(), |x| x.iter().map(|x| get_address(x)).collect()),
+            .map_or(Vec::new(), |x| x.iter().map(get_address).collect()),
     }
 }
 
 fn get_node_metric_pair<'a>(
     node: &'a Node,
-    metrics: &'a Vec<NodeMetrics>,
+    metrics: &'a List<NodeMetrics>,
 ) -> (&'a Node, Option<&'a NodeMetrics>) {
-    for metric in metrics {
+    for metric in metrics.items.iter() {
         if metric.metadata.name == node.metadata.name {
             return (node, Some(metric));
         }
@@ -103,7 +103,7 @@ fn get_node_metric_pair<'a>(
     (node, None)
 }
 
-fn get_new_nodes(node_response: List<Node>, metrics_response: Vec<NodeMetrics>) -> Vec<NodeInfo> {
+fn get_new_nodes(node_response: List<Node>, metrics_response: List<NodeMetrics>) -> Vec<NodeInfo> {
     node_response
         .items
         .iter()
@@ -113,20 +113,19 @@ fn get_new_nodes(node_response: List<Node>, metrics_response: Vec<NodeMetrics>) 
 }
 
 pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
-    let ip = ui_info.proxy.listen_addr.ip();
-    let port = ui_info.proxy.listen_addr.port();
+    let kube_url = ui_info.k8s_api.get_url();
 
-    let url = format!("http://{}:{}/api/v1/nodes", ip, port);
-    let url_metrics = format!("http://{}:{}/apis/metrics.k8s.io/v1beta1/nodes", ip, port);
+    let url = format!("{}/api/v1/nodes", kube_url);
+    let url_metrics = format!("{}/apis/metrics.k8s.io/v1beta1/nodes", kube_url);
 
     let nodes = ui_info.nodes.clone();
 
     thread::spawn(move || loop {
         let response = request_util::get_response_from_url::<ListResponse<Node>>(url.as_str());
-        let metrics_response = request_util::attempt_as_json::<NodeMetrics>(url_metrics.as_str());
+        let metrics_response = request_util::get_response_from_url::<ListResponse<NodeMetrics>>(url_metrics.as_str());
 
         if let Ok(ListResponse::Ok(response)) = response {
-            if let Ok(metrics_response) = metrics_response {
+            if let Ok(ListResponse::Ok(metrics_response)) = metrics_response {
                 let new_nodes: Vec<NodeInfo> = get_new_nodes(response, metrics_response);
 
                 let mut nodes_locked = nodes.lock();

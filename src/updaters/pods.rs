@@ -99,8 +99,7 @@ fn get_pod_info(pod: &Pod) -> PodInfo {
 
 pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
     let selected_namespace = ui_info.selected_namespace.clone();
-    let ip = ui_info.proxy.listen_addr.ip();
-    let port = ui_info.proxy.listen_addr.port();
+    let kube_url: String = ui_info.k8s_api.get_url().to_owned();
     let pods = ui_info.pods.clone();
 
     thread::spawn(move || loop {
@@ -109,7 +108,7 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
 
             locked_namespace
                 .as_ref()
-                .map(|ns| format!("http://{}:{}/api/v1/namespaces/{}/pods", ip, port, ns))
+                .map(|ns| format!("{}/api/v1/namespaces/{}/pods", kube_url, ns))
         };
 
         if let Some(url) = url {

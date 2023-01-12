@@ -1101,16 +1101,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "eyre"
-version = "0.6.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c2b6b5a29c02cdc822728b7d7b8ae1bab3e3b05d44522770ddd49722eeac7eb"
-dependencies = [
- "indenter",
- "once_cell",
-]
-
-[[package]]
 name = "fastrand"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1554,12 +1544,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indenter"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce23b50ad8242c51a442f3ff322d56b02f08852c77e4c0b4d3fd684abc89c683"
-
-[[package]]
 name = "indexmap"
 version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1646,28 +1630,14 @@ dependencies = [
 
 [[package]]
 name = "k8s-metrics"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fb8615fb6a40a58e6e6153ec11407e170e40c99273eef71edd838254821495a"
+checksum = "7d69561bbc057143b9e70b38400d9553787f058c64fa036016e46dbdc8994085"
 dependencies = [
  "go-parse-duration",
- "k8s-openapi 0.17.0",
+ "k8s-openapi",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "k8s-openapi"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0489fc937cc7616a9abfa61bf39c250d7e32e1325ef028c8d9278dd24ea395b3"
-dependencies = [
- "base64 0.13.1",
- "bytes",
- "chrono",
- "serde",
- "serde-value",
- "serde_json",
 ]
 
 [[package]]
@@ -1688,17 +1658,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "k8s_quantity_parser"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bb88149841f038d4b06ffab3faa97b95199105ecf867dca017cdadd6255e63e"
-dependencies = [
- "eyre",
- "k8s-openapi 0.14.0",
- "regex",
-]
-
-[[package]]
 name = "khronos_api"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1712,8 +1671,7 @@ dependencies = [
  "clap",
  "eframe",
  "k8s-metrics",
- "k8s-openapi 0.17.0",
- "k8s_quantity_parser",
+ "k8s-openapi",
  "log",
  "reqwest",
  "scanf",
