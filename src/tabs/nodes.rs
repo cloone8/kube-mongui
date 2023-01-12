@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use chrono::{Local, DateTime};
 use eframe::egui::{self, Ui};
 
 use crate::{KubeMonGUI, data::node::Hardware};
@@ -12,7 +13,6 @@ fn show_hardware_info(hardware: &Hardware, ui: &mut Ui) {
     hardware.hugepages_2_mi.map(|x| ui.label(format!("CPU: {}", x)));
 }
 
-#[inline]
 fn fmt_opt(opt: Option<impl Display>) -> String {
     match opt {
         Some(x) => x.to_string(),
@@ -20,11 +20,33 @@ fn fmt_opt(opt: Option<impl Display>) -> String {
     }
 }
 
+fn fmt_cpu(cpu: f64) -> String {
+    format!("{:.2} cores", cpu)
+}
+
+fn fmt_cpu_opt(cpu: Option<f64>) -> String {
+    match cpu {
+        Some(x) => fmt_cpu(x),
+        None => "?".to_string()
+    }
+}
+
+fn fmt_mem_opt(mem: Option<i64>) -> String {
+    match mem {
+        Some(x) => fmt_mem(x),
+        None => "?".to_string()
+    }
+}
+
+fn fmt_mem(mem: i64) -> String {
+    format!("{} MiB", mem / 1024 / 1024)
+}
+
 fn show_combined_hardware_info(capacity: &Hardware, allocatable: &Hardware, ui: &mut Ui) {
-    ui.label(format!("CPU: {}/{}", fmt_opt(allocatable.cpu), fmt_opt(capacity.cpu)));
-    ui.label(format!("Memory: {}/{}", fmt_opt(allocatable.memory), fmt_opt(capacity.memory)));
+    ui.label(format!("CPU: {}/{}", fmt_cpu_opt(allocatable.cpu), fmt_cpu_opt(capacity.cpu)));
+    ui.label(format!("Memory: {}/{}", fmt_mem_opt(allocatable.memory), fmt_mem_opt(capacity.memory)));
     ui.label(format!("Pods: {}/{}", fmt_opt(allocatable.pods), fmt_opt(capacity.pods)));
-    ui.label(format!("Ephemeral Storage: {}/{}", fmt_opt(allocatable.ephemeral_storage), fmt_opt(capacity.ephemeral_storage)));
+    ui.label(format!("Ephemeral Storage: {}/{}", fmt_mem_opt(allocatable.ephemeral_storage), fmt_mem_opt(capacity.ephemeral_storage)));
     ui.label(format!("Hugepages 2Mi: {}/{}", fmt_opt(allocatable.hugepages_2_mi), fmt_opt(capacity.hugepages_2_mi)));
 }
 
@@ -53,6 +75,34 @@ pub(crate) fn show(config: &mut KubeMonGUI, _: &egui::Context, ui: &mut egui::Ui
                 ui.collapsing("Hardware (Total)", |ui| show_hardware_info(capacity, ui));
             } else if let Some(allocatable) = &node.hardware.allocatable {
                 ui.collapsing("Hardware (Allocatable)", |ui| show_hardware_info(allocatable, ui));
+            }
+
+            if node.usage.is_some() && node.hardware.allocatable.is_some() {
+                ui.collapsing("Node Usage", |ui| {
+                    let usage = node.usage.as_ref().unwrap();
+                    let allocatable = node.hardware.allocatable.as_ref().unwrap();
+
+                    let last_updated = DateTime::<Local>::from(usage.updated).to_string();
+
+                    let cpu_used = usage.cpu.zip(allocatable.cpu).map(|(usage, allocatable)| usage / allocatable);
+                    let mem_used = usage.memory.zip(allocatable.memory).map(|(usage, allocatable)| usage as f64 / allocatable as f64);
+
+                    ui.label(format!("Last Updated: {}", last_updated));
+
+                    if let Some(cpu_used) = cpu_used {
+                        let progress_cpu = egui::ProgressBar::new(cpu_used as f32)
+                            .text(format!("CPU: {}/{}", fmt_cpu(usage.cpu.unwrap()), fmt_cpu(allocatable.cpu.unwrap())));
+
+                        ui.add(progress_cpu);
+                    }
+
+                    if let Some(mem_used) = mem_used {
+                        let progress_mem = egui::ProgressBar::new(mem_used as f32)
+                            .text(format!("Memory: {}/{}", fmt_mem(usage.memory.unwrap()), fmt_mem(allocatable.memory.unwrap())));
+
+                        ui.add(progress_mem);
+                    }
+                });
             }
         });
     }
