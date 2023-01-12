@@ -16,11 +16,11 @@ use crate::{
 
 fn get_hardware_detail_instance(hardware_detail: &BTreeMap<String, Quantity>) -> Hardware {
     Hardware {
-        cpu: hardware_detail.get("cpu").map(|x| quantity_to_float(x).ok()).flatten(),
-        memory: hardware_detail.get("memory").map(|x| quantity_to_int(x).ok()).flatten(),
-        pods: hardware_detail.get("pods").map(|x| quantity_to_int(x).ok()).flatten(),
-        ephemeral_storage: hardware_detail.get("ephemeral_storage").map(|x| quantity_to_int(x).ok()).flatten(),
-        hugepages_2_mi: hardware_detail.get("hugepages-2Mi").map(|x| quantity_to_int(x).ok()).flatten(),
+        cpu: hardware_detail.get("cpu").and_then(|x| quantity_to_float(x).ok()),
+        memory: hardware_detail.get("memory").and_then(|x| quantity_to_int(x).ok()),
+        pods: hardware_detail.get("pods").and_then(|x| quantity_to_int(x).ok()),
+        ephemeral_storage: hardware_detail.get("ephemeral-storage").and_then(|x| quantity_to_int(x).ok()),
+        hugepages_2_mi: hardware_detail.get("hugepages-2Mi").and_then(|x| quantity_to_int(x).ok()),
     }
 }
 
