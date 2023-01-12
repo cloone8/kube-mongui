@@ -24,7 +24,6 @@ fn namespace_selector(config: &mut KubeMonGUI, ui: &mut egui::Ui) {
     *selected_namespace = local_selected_namespace;
 }
 
-#[inline]
 fn render_container(container: &crate::data::container::ContainerInfo, ui: &mut egui::Ui) {
     ui.collapsing(container.name.as_str(), |ui| {
         ui.label(container.name.as_str());
@@ -36,7 +35,7 @@ fn render_container(container: &crate::data::container::ContainerInfo, ui: &mut 
             crate::data::container::ContainerStatus::Terminated => ui.label("Terminated"),
         };
 
-        let mut fake_bool = container.ready; // This was the user won't be able to change the value
+        let mut fake_bool = container.ready; // This is so the user won't be able to change the value
         ui.checkbox(&mut fake_bool, "Ready");
 
         if let Some(res) = container.resources.as_ref() {
@@ -69,7 +68,6 @@ fn render_container(container: &crate::data::container::ContainerInfo, ui: &mut 
     });
 }
 
-#[inline]
 fn render_pod(pod: &crate::data::pod::PodInfo, ui: &mut egui::Ui) {
     ui.collapsing(pod.name.as_str(), |ui| {
         match pod.status {

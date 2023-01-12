@@ -153,7 +153,7 @@ impl eframe::App for KubeMonGUI {
             ScrollArea::vertical().show(ui, |ui| {
                 match self.selected_tab {
                     KubeMonTabs::RunningPods => tabs::pods::show(self, ctx, ui),
-                    KubeMonTabs::CronJobs => (),
+                    KubeMonTabs::CronJobs => tabs::cronjobs::show(self, ctx, ui),
                     KubeMonTabs::Resources => (),
                     KubeMonTabs::Nodes => tabs::nodes::show(self, ctx, ui),
                 }
