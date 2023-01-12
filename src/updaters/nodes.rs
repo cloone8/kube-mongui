@@ -10,17 +10,17 @@ use k8s_openapi::{
 };
 
 use crate::{
-    data::node::{Address, Hardware, HardwareDetail, NodeCondition, NodeInfo, OsDetail},
-    util::request_util,
+    data::node::{Address, Hardware, HardwareDetail, NodeCondition, NodeInfo, OsDetail, NodeUsage},
+    util::{request_util, k8s_openapi_util::{quantity_to_float, quantity_to_int}},
 };
 
 fn get_hardware_detail_instance(hardware_detail: &BTreeMap<String, Quantity>) -> Hardware {
     Hardware {
-        cpu: hardware_detail.get("cpu").map(|x| x.0.clone()),
-        memory: hardware_detail.get("memory").map(|x| x.0.clone()),
-        pods: hardware_detail.get("pods").map(|x| x.0.clone()),
-        ephemeral_storage: hardware_detail.get("ephemeral_storage").map(|x| x.0.clone()),
-        hugepages_2_mi: hardware_detail.get("hugepages-2Mi").map(|x| x.0.clone()),
+        cpu: hardware_detail.get("cpu").map(|x| quantity_to_float(x).ok()).flatten(),
+        memory: hardware_detail.get("memory").map(|x| quantity_to_int(x).ok()).flatten(),
+        pods: hardware_detail.get("pods").map(|x| quantity_to_int(x).ok()).flatten(),
+        ephemeral_storage: hardware_detail.get("ephemeral_storage").map(|x| quantity_to_int(x).ok()).flatten(),
+        hugepages_2_mi: hardware_detail.get("hugepages-2Mi").map(|x| quantity_to_int(x).ok()).flatten(),
     }
 }
 
@@ -46,7 +46,7 @@ fn get_address(address: &k8s_openapi::api::core::v1::NodeAddress) -> Address {
     }
 }
 
-fn get_node_info(node: &Node, _: Option<&NodeMetrics>) -> NodeInfo {
+fn get_node_info(node: &Node, metrics: Option<&NodeMetrics>) -> NodeInfo {
     let node_status = node.status.as_ref().unwrap();
     let node_info = node_status.node_info.as_ref().unwrap();
 
@@ -70,10 +70,23 @@ fn get_node_info(node: &Node, _: Option<&NodeMetrics>) -> NodeInfo {
             .map(get_hardware_detail_instance),
     };
 
+    let node_metrics: Option<NodeUsage> = metrics.map(|metrics| {
+        let cpu_usage = quantity_to_float(&metrics.usage.cpu).ok();
+        let memory_usage = quantity_to_int(&metrics.usage.memory).ok();
+
+        NodeUsage {
+            cpu: cpu_usage,
+            memory: memory_usage,
+            updated: metrics.timestamp.0,
+        }
+    });
+
+
     NodeInfo {
         name: node_name,
-        hardware: hardware_detail,
         os: os_detail,
+        hardware: hardware_detail,
+        usage: node_metrics,
         conditions: node_status
             .conditions
             .as_ref()
