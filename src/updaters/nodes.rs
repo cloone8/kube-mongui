@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap, HashSet},
     thread::{self, sleep},
 };
 
@@ -10,7 +10,7 @@ use k8s_openapi::{
 
 use crate::{
     data::node::{Address, Hardware, HardwareDetail, NodeCondition, NodeInfo, OsDetail, NodeUsage},
-    util::{request_util, k8s_openapi_util::{quantity_to_float, quantity_to_int}},
+    util::{request_util, k8s_openapi_util::{quantity_to_float, quantity_to_int}, notification_util},
 };
 
 fn get_hardware_detail_instance(hardware_detail: &BTreeMap<String, Quantity>) -> Hardware {
@@ -123,6 +123,38 @@ fn get_new_nodes<'a>(node_response: &'a List<Node>, metrics_response: &'a List<N
         .map(|pair| get_node_info(pair.0, pair.1))
 }
 
+fn check_node_problems(nodes: Vec<NodeInfo>, known_node_problems: &mut HashMap<String, HashSet<String>>) {
+    for node in nodes {
+        let mut cur_node_problems: HashSet<String> = HashSet::new();
+
+        for condition in node.conditions {
+            match condition.condition_type.as_str() {
+                "Ready" => {
+                    if condition.status == Some(false) {
+                        cur_node_problems.insert(format!("{}: {}", condition.condition_type, condition.status.unwrap()));
+                    }
+                }
+                _ => {
+                    if condition.status == Some(true) {
+                        cur_node_problems.insert(format!("{}: {}", condition.condition_type, condition.status.unwrap()));
+                    }
+                }
+            }
+        }
+
+        if !cur_node_problems.is_empty() {
+            log::info!("Node {} has problems: {:?}", node.name, cur_node_problems);
+
+            let known_problems = known_node_problems.get(&node.name);
+
+            if known_problems.is_none() || *(known_problems.unwrap()) != cur_node_problems {
+                notification_util::notify_node_problem(&node.name, cur_node_problems.iter());
+                known_node_problems.insert(node.name.clone(), cur_node_problems);
+            }
+        }
+    }
+}
+
 pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
     let kube_url = ui_info.k8s_api.get_url();
 
@@ -132,11 +164,13 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
     let update_freq = ui_info.base_update_freq;
     let nodes = ui_info.nodes.clone();
 
+    let mut node_problems: HashMap<String, HashSet<String>> = HashMap::new();
+
     thread::spawn(move || loop {
         let response = request_util::get_response_from_url::<ListResponse<Node>>(url.as_str());
         let metrics_response = request_util::get_response_from_url::<ListResponse<NodeMetrics>>(url_metrics.as_str());
 
-        if let Ok(ListResponse::Ok(response)) = response {
+        let new_nodes = if let Ok(ListResponse::Ok(response)) = response {
             if let Ok(ListResponse::Ok(metrics_response)) = metrics_response {
                 let mut new_nodes = get_new_nodes(&response, &metrics_response);
 
@@ -144,7 +178,17 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
 
                 nodes_locked.clear();
                 nodes_locked.extend(&mut new_nodes);
+
+                Some(nodes_locked.clone())
+            } else {
+                None
             }
+        } else {
+            None
+        };
+
+        if let Some(new_nodes) = new_nodes {
+            check_node_problems(new_nodes, &mut node_problems);
         }
 
         sleep(update_freq);
