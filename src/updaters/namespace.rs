@@ -1,6 +1,6 @@
 use k8s_openapi::{ListResponse, api::core::v1::Namespace};
 
-use crate::{KubeMonGUI, util::request_util};
+use crate::{KubeMonGUI, libs::request};
 
 use std::{thread::{self, sleep}};
 
@@ -14,7 +14,7 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
 
     thread::spawn(move || {
         loop {
-            let response = request_util::get_response_from_url::<ListResponse<Namespace>>(url.as_str());
+            let response = request::get_response_from_url::<ListResponse<Namespace>>(url.as_str());
 
             if let Ok(ListResponse::Ok(response)) = response { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
                 let mut new_namespaces: Vec<String> = response.items.iter()

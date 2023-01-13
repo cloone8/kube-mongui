@@ -2,7 +2,7 @@ use std::{thread::{self, sleep}};
 
 use k8s_openapi::{ListResponse, api::batch::v1::{CronJob, JobTemplateSpec}};
 
-use crate::{KubeMonGUI, util::request_util, data::cronjob::{CronJobInfo, CronJobTemplate, CronJobConcurrencyPolicy, CronJobStatus, CronJobContainerInfo}};
+use crate::{KubeMonGUI, libs::request, data::cronjob::{CronJobInfo, CronJobTemplate, CronJobConcurrencyPolicy, CronJobStatus, CronJobContainerInfo}};
 
 fn filter_cronjobs_by_namespace<'a>(cronjobs: &'a [CronJob], namespace: Option<&String>) -> Vec<&'a CronJob> {
     cronjobs.iter()
@@ -91,7 +91,7 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
 
     thread::spawn(move || {
         loop {
-            let response = request_util::get_response_from_url::<ListResponse<CronJob>>(url.as_str());
+            let response = request::get_response_from_url::<ListResponse<CronJob>>(url.as_str());
 
             if let Ok(ListResponse::Ok(response)) = response {
                 let ns_filtered_cronjobs = filter_cronjobs_by_namespace(&response.items, selected_namespace.lock().as_ref());

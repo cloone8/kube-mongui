@@ -13,7 +13,7 @@ use crate::{
         container::{ContainerInfo, ContainerResources, ContainerStatus},
         pod::{PodInfo, PodStatus, QoSClass},
     },
-    util::request_util,
+    libs::request,
 };
 
 fn get_container_info(container: &Container, pod: &Pod) -> ContainerInfo {
@@ -112,7 +112,7 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
         };
 
         if let Some(url) = url {
-            let response = request_util::get_response_from_url::<ListResponse<Pod>>(url.as_str());
+            let response = request::get_response_from_url::<ListResponse<Pod>>(url.as_str());
 
             if let Ok(ListResponse::Ok(response)) = response {
                 let mut new_pods: Vec<PodInfo> = response.items.iter().map(get_pod_info).collect();

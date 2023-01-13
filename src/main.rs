@@ -1,7 +1,7 @@
 mod kubeproxy;
 mod updaters;
 mod tabs;
-mod util;
+mod libs;
 mod cli_args;
 mod data;
 
@@ -13,7 +13,7 @@ use data::{pod::PodInfo, node::NodeInfo, cronjob::CronJobInfo};
 use eframe::{egui::{self, ScrollArea}, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
 
-use crate::util::notification_util::init_notifications;
+use crate::libs::notifications::init_notifications;
 
 fn main() {
     let args = CLIArgs::parse();

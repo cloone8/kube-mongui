@@ -10,7 +10,7 @@ use k8s_openapi::{
 
 use crate::{
     data::node::{Address, Hardware, HardwareDetail, NodeCondition, NodeInfo, OsDetail, NodeUsage},
-    util::{request_util, k8s_openapi_util::{quantity_to_float, quantity_to_int}, notification_util},
+    libs::{request, k8s::{quantity_to_float, quantity_to_int}, notifications},
 };
 
 fn get_hardware_detail_instance(hardware_detail: &BTreeMap<String, Quantity>) -> Hardware {
@@ -148,7 +148,7 @@ fn check_node_problems(nodes: Vec<NodeInfo>, known_node_problems: &mut HashMap<S
             let known_problems = known_node_problems.get(&node.name);
 
             if known_problems.is_none() || *(known_problems.unwrap()) != cur_node_problems {
-                notification_util::notify_node_problem(&node.name, cur_node_problems.iter());
+                notifications::notify_node_problem(&node.name, cur_node_problems.iter());
                 known_node_problems.insert(node.name.clone(), cur_node_problems);
             }
         }
@@ -167,8 +167,8 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
     let mut node_problems: HashMap<String, HashSet<String>> = HashMap::new();
 
     thread::spawn(move || loop {
-        let response = request_util::get_response_from_url::<ListResponse<Node>>(url.as_str());
-        let metrics_response = request_util::get_response_from_url::<ListResponse<NodeMetrics>>(url_metrics.as_str());
+        let response = request::get_response_from_url::<ListResponse<Node>>(url.as_str());
+        let metrics_response = request::get_response_from_url::<ListResponse<NodeMetrics>>(url_metrics.as_str());
 
         let new_nodes = if let Ok(ListResponse::Ok(response)) = response {
             if let Ok(ListResponse::Ok(metrics_response)) = metrics_response {
