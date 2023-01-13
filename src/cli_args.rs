@@ -11,7 +11,12 @@ pub(crate) struct CLIArgs {
     #[arg(value_enum, short, long)]
     pub theme: Option<Theme>,
 
+    #[cfg(not(debug_assertions))]
     #[arg(value_enum, short, long, default_value_t = LogLevel::Warn)]
+    pub verbosity: LogLevel,
+
+    #[cfg(debug_assertions)]
+    #[arg(value_enum, short, long, default_value_t = LogLevel::Info)]
     pub verbosity: LogLevel,
 
     /// Url to the kubernetes API. Must be pre-authenticated. If left empty, kube-mongui will

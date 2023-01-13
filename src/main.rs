@@ -9,7 +9,7 @@ use std::{sync::Arc, time::Duration, fmt::Display};
 
 use clap::Parser;
 use cli_args::CLIArgs;
-use data::{pod::PodInfo, node::NodeInfo};
+use data::{pod::PodInfo, node::NodeInfo, cronjob::CronJobInfo};
 use eframe::{egui::{self, ScrollArea}, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
 
@@ -113,7 +113,9 @@ pub(crate) struct KubeMonGUI {
 
     pods: Arc<Mutex<Vec<PodInfo>>>,
 
-    nodes: Arc<Mutex<Vec<NodeInfo>>>
+    nodes: Arc<Mutex<Vec<NodeInfo>>>,
+
+    cronjobs: Arc<Mutex<Vec<CronJobInfo>>>
 }
 
 impl KubeMonGUI {
@@ -124,7 +126,8 @@ impl KubeMonGUI {
             namespaces: Arc::new(Mutex::new(Vec::new())),
             selected_namespace: Arc::new(Mutex::new(None)),
             pods: Arc::new(Mutex::new(Vec::new())),
-            nodes: Arc::new(Mutex::new(Vec::new()))
+            nodes: Arc::new(Mutex::new(Vec::new())),
+            cronjobs: Arc::new(Mutex::new(Vec::new()))
         }
     }
 }
