@@ -1,4 +1,8 @@
-use notify_rust::{Notification, Timeout};
+use super::notifications::send_notification;
+
+pub fn init_notifications() {
+    super::notifications::init_notifications();
+}
 
 pub fn notify_node_problem<'a>(node_name: &str, problems: impl Iterator<Item = &'a String>) {
     log::info!("Notifying user of node problem for node {}", node_name);
@@ -8,16 +12,15 @@ pub fn notify_node_problem<'a>(node_name: &str, problems: impl Iterator<Item = &
         .collect::<Vec<String>>()
         .join("\n");
 
-    let notif_result = Notification::new()
-        .summary(format!("{} has a problem", node_name).as_str())
-        .body(format!("{} has the following problems:\n{}", node_name, problems_fmt).as_str())
-        .timeout(Timeout::Default)
-        .show();
+    let notif_result = send_notification(
+        format!("{} has a problem", node_name).as_str(),
+        format!("{} has the following problems:\n{}", node_name, problems_fmt).as_str()
+    );
 
-        match notif_result {
-            Ok(_) => {},
-            Err(_) => {
-                log::warn!("Failed to show notification for node {} with problems: {}", node_name, problems_fmt);
-            },
-        }
+    match notif_result {
+        Ok(_) => {},
+        Err(_) => {
+            log::warn!("Failed to show notification for node {} with problems: {}", node_name, problems_fmt);
+        },
+    }
 }

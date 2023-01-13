@@ -13,6 +13,8 @@ use data::{pod::PodInfo, node::NodeInfo, cronjob::CronJobInfo};
 use eframe::{egui::{self, ScrollArea}, epaint::mutex::Mutex};
 use kubeproxy::KubeProxy;
 
+use crate::util::notification_util::init_notifications;
+
 fn main() {
     let args = CLIArgs::parse();
 
@@ -34,6 +36,8 @@ fn main() {
             Err(e) => panic!("Failed to start kubectl proxy: {:?}", e),
         }
     };
+
+    init_notifications();
 
     let mut ui = Box::new(KubeMonGUI::new(k8s_api_url, &args));
 
