@@ -96,14 +96,14 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
             if let Ok(ListResponse::Ok(response)) = response {
                 let ns_filtered_cronjobs = filter_cronjobs_by_namespace(&response.items, selected_namespace.lock().as_ref());
 
-                let cronjob_info: Vec<CronJobInfo> = ns_filtered_cronjobs.iter()
+                let mut cronjob_info: Vec<CronJobInfo> = ns_filtered_cronjobs.iter()
                     .map(get_cronjob_info)
                     .collect();
 
                 let mut cronjobs_locked = cronjobs.lock();
 
                 cronjobs_locked.clear();
-                cronjobs_locked.extend(cronjob_info);
+                cronjobs_locked.append(&mut cronjob_info);
             }
 
             sleep(update_freq);

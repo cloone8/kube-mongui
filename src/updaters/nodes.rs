@@ -115,13 +115,12 @@ fn get_node_metric_pair<'a>(
     (node, None)
 }
 
-fn get_new_nodes(node_response: List<Node>, metrics_response: List<NodeMetrics>) -> Vec<NodeInfo> {
+fn get_new_nodes<'a>(node_response: &'a List<Node>, metrics_response: &'a List<NodeMetrics>) -> impl Iterator<Item = NodeInfo> + 'a {
     node_response
         .items
         .iter()
-        .map(|node| get_node_metric_pair(node, &metrics_response))
+        .map(move |node| get_node_metric_pair(node, metrics_response))
         .map(|pair| get_node_info(pair.0, pair.1))
-        .collect()
 }
 
 pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
@@ -139,12 +138,12 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
 
         if let Ok(ListResponse::Ok(response)) = response {
             if let Ok(ListResponse::Ok(metrics_response)) = metrics_response {
-                let mut new_nodes: Vec<NodeInfo> = get_new_nodes(response, metrics_response);
+                let mut new_nodes = get_new_nodes(&response, &metrics_response);
 
                 let mut nodes_locked = nodes.lock();
 
                 nodes_locked.clear();
-                nodes_locked.append(&mut new_nodes);
+                nodes_locked.extend(&mut new_nodes);
             }
         }
 
