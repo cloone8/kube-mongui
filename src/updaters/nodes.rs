@@ -1,7 +1,6 @@
 use std::{
     collections::BTreeMap,
     thread::{self, sleep},
-    time::Duration,
 };
 
 use k8s_metrics::v1beta1::NodeMetrics;
@@ -131,6 +130,7 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
     let url = format!("{}/api/v1/nodes", kube_url);
     let url_metrics = format!("{}/apis/metrics.k8s.io/v1beta1/nodes", kube_url);
 
+    let update_freq = ui_info.base_update_freq;
     let nodes = ui_info.nodes.clone();
 
     thread::spawn(move || loop {
@@ -148,7 +148,7 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
             }
         }
 
-        sleep(Duration::from_secs(1));
+        sleep(update_freq);
     });
 
     Ok(())

@@ -11,6 +11,11 @@ pub(crate) struct CLIArgs {
     #[arg(value_enum, short, long)]
     pub theme: Option<Theme>,
 
+    /// The update factor. This scales the update interval of all updaters. 1.0 means "normal speed", 2.0 means "twice as slow", etc.
+    /// Most updaters will update their data every second, but not all.
+    #[arg(short = 'f', long, default_value_t = 1.0)]
+    pub update_factor: f64,
+
     #[cfg(not(debug_assertions))]
     #[arg(value_enum, short, long, default_value_t = LogLevel::Warn)]
     pub verbosity: LogLevel,

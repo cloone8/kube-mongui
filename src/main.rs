@@ -35,7 +35,7 @@ fn main() {
         }
     };
 
-    let mut ui = Box::new(KubeMonGUI::new(k8s_api_url));
+    let mut ui = Box::new(KubeMonGUI::new(k8s_api_url, &args));
 
     match updaters::start_all(&mut ui) {
         Ok(_) => (),
@@ -106,6 +106,8 @@ impl KubeUrl {
 pub(crate) struct KubeMonGUI {
     k8s_api: KubeUrl,
 
+    base_update_freq: Duration,
+
     selected_tab: KubeMonTabs,
 
     namespaces: Arc<Mutex<Vec<String>>>,
@@ -119,9 +121,10 @@ pub(crate) struct KubeMonGUI {
 }
 
 impl KubeMonGUI {
-    fn new(k8s_api: KubeUrl) -> Self {
+    fn new(k8s_api: KubeUrl, args: &CLIArgs) -> Self {
         KubeMonGUI {
             k8s_api,
+            base_update_freq: Duration::from_secs(1).mul_f64(args.update_factor),
             selected_tab: KubeMonTabs::default(),
             namespaces: Arc::new(Mutex::new(Vec::new())),
             selected_namespace: Arc::new(Mutex::new(None)),

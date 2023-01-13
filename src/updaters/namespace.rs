@@ -2,9 +2,10 @@ use k8s_openapi::{ListResponse, api::core::v1::Namespace};
 
 use crate::{KubeMonGUI, util::request_util};
 
-use std::{thread::{self, sleep}, time::Duration};
+use std::{thread::{self, sleep}};
 
 pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
+    let update_freq = ui_info.base_update_freq.mul_f64(5.0);
     let namespaces = ui_info.namespaces.clone();
     let selected_namespace = ui_info.selected_namespace.clone();
     let kube_url = ui_info.k8s_api.get_url();
@@ -35,7 +36,7 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
                 };
             }
 
-            sleep(Duration::from_secs(5));
+            sleep(update_freq);
         }
     });
 

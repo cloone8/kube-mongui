@@ -1,4 +1,4 @@
-use std::{thread::{self, sleep}, time::Duration};
+use std::{thread::{self, sleep}};
 
 use k8s_openapi::{ListResponse, api::batch::v1::{CronJob, JobTemplateSpec}};
 
@@ -81,6 +81,7 @@ fn get_cronjob_info(cronjob: &&CronJob) -> CronJobInfo {
 }
 
 pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
+    let update_freq = ui_info.base_update_freq;
     let selected_namespace = ui_info.selected_namespace.clone();
     let cronjobs = ui_info.cronjobs.clone();
 
@@ -105,7 +106,7 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
                 cronjobs_locked.extend(cronjob_info);
             }
 
-            sleep(Duration::from_secs(1));
+            sleep(update_freq);
         }
     });
 

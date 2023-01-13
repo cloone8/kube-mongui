@@ -1,7 +1,6 @@
 use std::{
     str::FromStr,
     thread::{self, sleep},
-    time::Duration,
 };
 
 use k8s_openapi::{
@@ -98,6 +97,7 @@ fn get_pod_info(pod: &Pod) -> PodInfo {
 }
 
 pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
+    let update_freq = ui_info.base_update_freq;
     let selected_namespace = ui_info.selected_namespace.clone();
     let kube_url: String = ui_info.k8s_api.get_url().to_owned();
     let pods = ui_info.pods.clone();
@@ -124,7 +124,7 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
             }
         }
 
-        sleep(Duration::from_secs(1));
+        sleep(update_freq);
     });
 
     Ok(())
