@@ -17,23 +17,25 @@ pub(crate) fn start(ui_info: &mut KubeMonGUI) -> Result<(), ()> {
             let response = request_util::get_response_from_url::<ListResponse<Namespace>>(url.as_str());
 
             if let Ok(ListResponse::Ok(response)) = response { // Enter a new block/scope so we can ensure the mutexes are dropped before sleeping
+                let mut new_namespaces: Vec<String> = response.items.iter()
+                    .map(|ns| ns.metadata.name.as_ref().unwrap().clone())
+                    .collect();
+
+
+                { // Smaller scope to let mutex drop early
+                    let mut selected_namespace = selected_namespace.lock();
+
+                    if let Some(ns) = selected_namespace.as_ref() {
+                        if !new_namespaces.contains(ns) {
+                            *selected_namespace = None;
+                        }
+                    };
+                }
+
                 let mut namespaces = namespaces.lock();
 
                 namespaces.clear();
-
-                for retrieved_namespace in response.items.iter() {
-                    let name = retrieved_namespace.metadata.name.as_ref().unwrap();
-
-                    namespaces.push(name.clone());
-                }
-
-                let mut selected_namespace = selected_namespace.lock();
-
-                if let Some(ns) = selected_namespace.as_ref() {
-                    if !namespaces.contains(ns) {
-                        *selected_namespace = None;
-                    }
-                };
+                namespaces.append(&mut new_namespaces);
             }
 
             sleep(update_freq);

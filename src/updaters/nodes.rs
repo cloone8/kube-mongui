@@ -139,12 +139,12 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
 
         if let Ok(ListResponse::Ok(response)) = response {
             if let Ok(ListResponse::Ok(metrics_response)) = metrics_response {
-                let new_nodes: Vec<NodeInfo> = get_new_nodes(response, metrics_response);
+                let mut new_nodes: Vec<NodeInfo> = get_new_nodes(response, metrics_response);
 
                 let mut nodes_locked = nodes.lock();
 
                 nodes_locked.clear();
-                nodes_locked.extend(new_nodes);
+                nodes_locked.append(&mut new_nodes);
             }
         }
 
