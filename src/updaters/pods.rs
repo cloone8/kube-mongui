@@ -103,13 +103,10 @@ pub(crate) fn start(ui_info: &mut crate::KubeMonGUI) -> Result<(), ()> {
     let pods = ui_info.pods.clone();
 
     thread::spawn(move || loop {
-        let url = {
-            let locked_namespace = selected_namespace.lock();
-
-            locked_namespace
-                .as_ref()
-                .map(|ns| format!("{}/api/v1/namespaces/{}/pods", kube_url, ns))
-        };
+        let url = selected_namespace
+            .lock()
+            .as_ref()
+            .map(|ns| format!("{}/api/v1/namespaces/{}/pods", kube_url, ns));
 
         if let Some(url) = url {
             let response = request::get_response_from_url::<ListResponse<Pod>>(url.as_str());
